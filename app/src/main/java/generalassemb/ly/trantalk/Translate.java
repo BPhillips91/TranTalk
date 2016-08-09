@@ -3,7 +3,13 @@ package generalassemb.ly.trantalk;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,6 +17,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -23,17 +32,34 @@ public class Translate {
 
     //TODO: Turn class into a service to do in background
 
-
-    private static final String TRANSLATE_API_KEY="AIzaSyD4jOJ10geXa89nhbXBQZFPYHcGc0sq_dg";
-    String url = "https://www.googleapis.com/language/translate/v2?key=";
-    String sourceLan="&source=en";
-    String targetLan="&target=es";
-    String message= "&q=";
-    String query= url+TRANSLATE_API_KEY+message+sourceLan+targetLan;
-
+    private static FirebaseAuth auth = FirebaseAuth.getInstance();
+    private static final String TRANSLATE_API_KEY = "AIzaSyD4jOJ10geXa89nhbXBQZFPYHcGc0sq_dg&q=";
+    static String url = "https://www.googleapis.com/language/translate/v2?key=";
+    String sourceLan = "&source=";
+    String targetLan = "&target=";
+    String message = "&q=";
+    private static String messageKey;
+    private static String user = auth.getCurrentUser().getDisplayName();
 
     OkHttpClient client = new OkHttpClient();
 
+
+    public static void translateToSpanish(String Message, String key) {
+        messageKey = key;
+        String toTranslate = Message.replace(" ", "%20");
+        String source = "&source=en";
+        String target = "&target=es";
+        new SpanishTranslateTask().execute(url + TRANSLATE_API_KEY + toTranslate + source + target);
+    }
+
+    public static void translateToEnglish(String message, String key) {
+        messageKey = key;
+        String toTranslate = message.replace(" ", "%20");
+        String source = "&source=es";
+        String target = "&target=en";
+        new EnglishTranslateTask().execute(url + TRANSLATE_API_KEY + toTranslate + source + target);
+
+    }
 
     private String run(String url) throws IOException {
         Request request = new Request.Builder()
@@ -41,13 +67,13 @@ public class Translate {
                 .build();
 
         Response response = client.newCall(request).execute();
-        Log.d("RESPONSE",response.body().toString());
+        Log.d("RESPONSE", response.body().toString());
         return response.body().string();
 
 
-
     }
-    private String downloadUrl(String url) throws IOException, JSONException {
+
+    private static String downloadUrl(String url) throws IOException, JSONException {
 
         InputStream inputStream = null;
 
@@ -68,7 +94,7 @@ public class Translate {
 
     }
 
-    private String readInput(InputStream inputStream) throws IOException {
+    private static String readInput(InputStream inputStream) throws IOException {
 
         StringBuilder stringBuilder = new StringBuilder();
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
@@ -82,17 +108,15 @@ public class Translate {
     }
 
 
-
-
-    private class DownloadUrlTask extends AsyncTask<String, Void, String> {
-
+    public static class SpanishTranslateTask extends AsyncTask<String, Void, String> {
+        // TODO: set up parser for spanish translations
 
         @Override
         protected String doInBackground(String... urls) {
 
             try {
                 String json = downloadUrl(urls[0]);
-                return json;
+                return parseToSpanish(json);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (JSONException e) {
@@ -103,12 +127,79 @@ public class Translate {
 
         @Override
         protected void onPostExecute(String s) {
+            Log.d("TAG", "Translate response = " + s);
+            HashMap<String, Object> map = new HashMap<String, Object>();
+            map.put("user",user);
+            map.put("message",s);
+            DatabaseReference spanish = FirebaseDatabase.getInstance().getReference("spanish");
+            spanish.child(messageKey).setValue(map);
 
-            Log.d("TAG", "Translate response = "+s);
+        }
+    }
+
+    public static class EnglishTranslateTask extends AsyncTask<String, Void, String> {
+        // TODO: set up parser for english translations
+
+
+        @Override
+        protected String doInBackground(String... urls) {
+
+            try {
+                String json = downloadUrl(urls[0]);
+                return parseToEnglish(json);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            HashMap<String, Object> map = new HashMap<String, Object>();
+            map.put("user",user);
+            map.put("message",s);
+            DatabaseReference english = FirebaseDatabase.getInstance().getReference("english");
+            english.child(messageKey).setValue(map);
+            Log.d("TAG", "Translate response = " + s);
 
 
         }
     }
 
+    private static String parseToSpanish(String jsonToParse) throws JSONException {
+        String message = "";
 
+        JSONObject dataObject = new JSONObject(jsonToParse).getJSONObject("data");
+
+        JSONArray translationsArray = dataObject.getJSONArray("translations");
+        for (int i = 0; i < translationsArray.length(); i++) {
+            JSONObject translated = translationsArray.getJSONObject(i);
+            message = translated.getString("translatedText");
+            Log.d("TAG", "parseToSpanish: " +message);
+        }
+
+        return message;
+
+
+
+    }
+    private static String parseToEnglish(String jsonToParse) throws JSONException {
+        String message = "";
+
+        JSONObject dataObject = new JSONObject(jsonToParse).getJSONObject("data");
+
+        JSONArray translationsArray = dataObject.getJSONArray("translations");
+        for (int i = 0; i < translationsArray.length(); i++) {
+            JSONObject translated = translationsArray.getJSONObject(i);
+            message = translated.getString("translatedText");
+            Log.d("TAG", "parseToSpanish: " +message);
+        }
+
+        return message;
+
+
+
+    }
 }

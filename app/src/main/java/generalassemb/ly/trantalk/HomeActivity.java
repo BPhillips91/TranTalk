@@ -22,7 +22,6 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         logIn();
-
     }
 
     private void logIn() {
@@ -34,6 +33,7 @@ public class HomeActivity extends AppCompatActivity {
             String user = auth.getCurrentUser().getUid();
             String name = auth.getCurrentUser().getDisplayName();
             setTitle(name);
+            startActivity(new Intent(this, ChatRoom.class));
 
             Log.d(TAG, "onCreate: User = " + name);
         } else {
@@ -49,7 +49,7 @@ public class HomeActivity extends AppCompatActivity {
         if (requestCode == 1) {
             if (resultCode == RESULT_OK) {
                 // user is signed in!
-                startActivity(new Intent(this, HomeActivity.class));
+                startActivity(new Intent(this, ChatRoom.class));
                 finish();
             } else {
                 // user is not signed in. Maybe just wait for the user to press
