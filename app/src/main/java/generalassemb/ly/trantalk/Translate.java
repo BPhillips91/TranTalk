@@ -30,53 +30,43 @@ import okhttp3.Response;
  */
 public class Translate {
 
-    //TODO: Turn class into a service to do in background
-
     private static FirebaseAuth auth = FirebaseAuth.getInstance();
     private static final String TRANSLATE_API_KEY = "AIzaSyD4jOJ10geXa89nhbXBQZFPYHcGc0sq_dg&q=";
     static String url = "https://www.googleapis.com/language/translate/v2?key=";
-    String sourceLan = "&source=";
-    String targetLan = "&target=";
-    String message = "&q=";
     private static String messageKey;
+    private static long timestamp;
     private static String user = auth.getCurrentUser().getDisplayName();
-
     OkHttpClient client = new OkHttpClient();
 
-
-    public static void translateToSpanish(String Message, String key) {
+    public static void translateToSpanish(String Message, String key,long time) {
         messageKey = key;
+        timestamp = time;
         String toTranslate = Message.replace(" ", "%20");
         String source = "&source=en";
         String target = "&target=es";
         new SpanishTranslateTask().execute(url + TRANSLATE_API_KEY + toTranslate + source + target);
     }
 
-    public static void translateToEnglish(String message, String key) {
+    public static void translateToEnglish(String message, String key, long time) {
         messageKey = key;
+        timestamp = time;
         String toTranslate = message.replace(" ", "%20");
         String source = "&source=es";
         String target = "&target=en";
         new EnglishTranslateTask().execute(url + TRANSLATE_API_KEY + toTranslate + source + target);
-
     }
 
     private String run(String url) throws IOException {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
-
         Response response = client.newCall(request).execute();
         Log.d("RESPONSE", response.body().toString());
         return response.body().string();
-
-
     }
 
     private static String downloadUrl(String url) throws IOException, JSONException {
-
         InputStream inputStream = null;
-
         try {
             URL nativeUrl = new URL(url);
             HttpURLConnection connection = (HttpURLConnection) nativeUrl.openConnection();
@@ -84,7 +74,6 @@ public class Translate {
             connection.setDoInput(true);
             connection.connect();
             inputStream = connection.getInputStream();
-
             return readInput(inputStream);
         } finally {
             if (inputStream != null) {
@@ -95,25 +84,18 @@ public class Translate {
     }
 
     private static String readInput(InputStream inputStream) throws IOException {
-
         StringBuilder stringBuilder = new StringBuilder();
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-
         String read;
-
         while ((read = bufferedReader.readLine()) != null) {
             stringBuilder.append(read);
         }
         return stringBuilder.toString();
     }
 
-
     public static class SpanishTranslateTask extends AsyncTask<String, Void, String> {
-        // TODO: set up parser for spanish translations
-
         @Override
         protected String doInBackground(String... urls) {
-
             try {
                 String json = downloadUrl(urls[0]);
                 return parseToSpanish(json);
@@ -131,15 +113,14 @@ public class Translate {
             HashMap<String, Object> map = new HashMap<String, Object>();
             map.put("user",user);
             map.put("message",s);
-            DatabaseReference spanish = FirebaseDatabase.getInstance().getReference("spanish");
-            spanish.child(messageKey).setValue(map);
+            map.put("timestamp", timestamp);
 
+            DatabaseReference spanish = FirebaseDatabase.getInstance().getReference("spanish").child(HomeActivity.chatRoom);
+            spanish.child(messageKey).setValue(map);
         }
     }
 
     public static class EnglishTranslateTask extends AsyncTask<String, Void, String> {
-        // TODO: set up parser for english translations
-
 
         @Override
         protected String doInBackground(String... urls) {
@@ -160,46 +141,32 @@ public class Translate {
             HashMap<String, Object> map = new HashMap<String, Object>();
             map.put("user",user);
             map.put("message",s);
-            DatabaseReference english = FirebaseDatabase.getInstance().getReference("english");
+            map.put("timestamp", timestamp);
+            DatabaseReference english = FirebaseDatabase.getInstance().getReference("english").child(HomeActivity.chatRoom);
             english.child(messageKey).setValue(map);
             Log.d("TAG", "Translate response = " + s);
-
-
         }
     }
 
     private static String parseToSpanish(String jsonToParse) throws JSONException {
         String message = "";
-
         JSONObject dataObject = new JSONObject(jsonToParse).getJSONObject("data");
-
         JSONArray translationsArray = dataObject.getJSONArray("translations");
         for (int i = 0; i < translationsArray.length(); i++) {
             JSONObject translated = translationsArray.getJSONObject(i);
             message = translated.getString("translatedText");
-            Log.d("TAG", "parseToSpanish: " +message);
         }
-
         return message;
-
-
-
     }
+
     private static String parseToEnglish(String jsonToParse) throws JSONException {
         String message = "";
-
         JSONObject dataObject = new JSONObject(jsonToParse).getJSONObject("data");
-
         JSONArray translationsArray = dataObject.getJSONArray("translations");
         for (int i = 0; i < translationsArray.length(); i++) {
             JSONObject translated = translationsArray.getJSONObject(i);
             message = translated.getString("translatedText");
-            Log.d("TAG", "parseToSpanish: " +message);
         }
-
         return message;
-
-
-
     }
 }

@@ -1,26 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@mipmap/chatbackground"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    >
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/messages"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginBottom="5dp"
+        android:layout_above="@+id/new_message" />
 
     <Button
         android:id="@+id/send_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
-        android:text="Send" />
+        android:visibility="invisible"
+        android:background="@drawable/ic_send_black_24dp"
+         />
 
     <EditText
         android:id="@+id/new_message"
+        android:hint="New Message"
+        android:textColorHint="#FF0000"
+        android:textColor="#FFF"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/send_button"
         android:layout_alignParentStart="true"
-        android:layout_toStartOf="@+id/send_button" />
+        android:layout_toStartOf="@+id/send_button"
+        android:layout_marginTop="10dp" />
+
+
 </RelativeLayout>
