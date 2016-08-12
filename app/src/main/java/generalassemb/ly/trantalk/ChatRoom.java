@@ -91,7 +91,7 @@ public class ChatRoom extends AppCompatActivity {
         messageListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                updateAdapter();
+                updateAdapter("original");
             }
 
             @Override
@@ -99,15 +99,12 @@ public class ChatRoom extends AppCompatActivity {
             }
         };
         messageRef.addValueEventListener(messageListener);
-
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        updateAdapter();
-
-
+        updateAdapter("original");
     }
 
     @Override
@@ -122,15 +119,15 @@ public class ChatRoom extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.original:
                 setTitle(HomeActivity.chatRoom);
-                updateAdapter();
+                updateAdapter("original");
                 break;
             case R.id.spanish:
                 setTitle(HomeActivity.chatRoom + " (Spanish)");
-                updateAdapter();
+                updateAdapter("spanish");
                 break;
             case R.id.english:
                 setTitle(HomeActivity.chatRoom + " (English)");
-                updateAdapter();
+                updateAdapter("english");
                 break;
             default:
                 break;
@@ -139,34 +136,87 @@ public class ChatRoom extends AppCompatActivity {
     }
 
 
+    public void updateAdapter(String lan) {
 
-    public void updateAdapter() {
-        mAdapter = new FirebaseRecyclerAdapter<Chat, ChatHolder>
-                (Chat.class, R.layout.message_view, ChatHolder.class, messageRef) {
-            @Override
-            public void populateViewHolder(ChatHolder chatMessageViewHolder, Chat chatMessage, int position) {
-                String user = chatMessage.getUser();
-                Date current = new Date(chatMessage.getTimestamp());
-                SimpleDateFormat format = new SimpleDateFormat("MMM dd h:mm");
-                String date = format.format(current);
-                if (!user.equalsIgnoreCase(userName)) {
-                    chatMessageViewHolder.setGravity("");
-                    chatMessageViewHolder.setTime(date);
-                    chatMessageViewHolder.setName(chatMessage.getUser());
-                    chatMessageViewHolder.setText(chatMessage.getMessage());
-                } else if (user.equalsIgnoreCase(userName)) {
-                    chatMessageViewHolder.setGravity("right");
-                    chatMessageViewHolder.setTime(date);
-                    chatMessageViewHolder.setName("");
-                    chatMessageViewHolder.setText(chatMessage.getMessage());
-                }else{
-                    Log.d("USER", "populateViewHolder: New User");
+        if (lan.equals("original")) {
+            mAdapter = new FirebaseRecyclerAdapter<Chat, ChatHolder>
+                    (Chat.class, R.layout.message_view, ChatHolder.class, messageRef) {
+                @Override
+                public void populateViewHolder(ChatHolder chatMessageViewHolder, Chat chatMessage, int position) {
+                    String user = chatMessage.getUser();
+                    Date current = new Date(chatMessage.getTimestamp());
+                    SimpleDateFormat format = new SimpleDateFormat("MMM dd h:mm");
+                    String date = format.format(current);
+                    if (!user.equalsIgnoreCase(userName)) {
+                        chatMessageViewHolder.setGravity("");
+                        chatMessageViewHolder.setTime(date);
+                        chatMessageViewHolder.setName(chatMessage.getUser());
+                        chatMessageViewHolder.setText(chatMessage.getMessage());
+                    } else if (user.equalsIgnoreCase(userName)) {
+                        chatMessageViewHolder.setGravity("right");
+                        chatMessageViewHolder.setTime(date);
+                        chatMessageViewHolder.setName("");
+                        chatMessageViewHolder.setText(chatMessage.getMessage());
+                    } else {
+                        Log.d("USER", "populateViewHolder: New User");
+                    }
                 }
-
-            }
-        };
-        mAdapter.notifyDataSetChanged();
-        mRecyclerView.setAdapter(mAdapter);
+            };
+            mAdapter.notifyDataSetChanged();
+            mRecyclerView.setAdapter(mAdapter);
+        } else if (lan.equals("spanish")) {
+            mAdapter = new FirebaseRecyclerAdapter<Chat, ChatHolder>
+                    (Chat.class, R.layout.message_view, ChatHolder.class, spanishRef) {
+                @Override
+                public void populateViewHolder(ChatHolder chatMessageViewHolder, Chat chatMessage, int position) {
+                    String user = chatMessage.getUser();
+                    Date current = new Date(chatMessage.getTimestamp());
+                    SimpleDateFormat format = new SimpleDateFormat("MMM dd h:mm");
+                    String date = format.format(current);
+                    if (!user.equalsIgnoreCase(userName)) {
+                        chatMessageViewHolder.setGravity("");
+                        chatMessageViewHolder.setTime(date);
+                        chatMessageViewHolder.setName(chatMessage.getUser());
+                        chatMessageViewHolder.setText(chatMessage.getMessage());
+                    } else if (user.equalsIgnoreCase(userName)) {
+                        chatMessageViewHolder.setGravity("right");
+                        chatMessageViewHolder.setTime(date);
+                        chatMessageViewHolder.setName("");
+                        chatMessageViewHolder.setText(chatMessage.getMessage());
+                    } else {
+                        Log.d("USER", "populateViewHolder: New User");
+                    }
+                }
+            };
+            mAdapter.notifyDataSetChanged();
+            mRecyclerView.setAdapter(mAdapter);
+        } else if (lan.equals("english")) {
+            mAdapter = new FirebaseRecyclerAdapter<Chat, ChatHolder>
+                    (Chat.class, R.layout.message_view, ChatHolder.class, englishRef) {
+                @Override
+                public void populateViewHolder(ChatHolder chatMessageViewHolder, Chat chatMessage, int position) {
+                    String user = chatMessage.getUser();
+                    Date current = new Date(chatMessage.getTimestamp());
+                    SimpleDateFormat format = new SimpleDateFormat("MMM dd h:mm");
+                    String date = format.format(current);
+                    if (!user.equalsIgnoreCase(userName)) {
+                        chatMessageViewHolder.setGravity("");
+                        chatMessageViewHolder.setTime(date);
+                        chatMessageViewHolder.setName(chatMessage.getUser());
+                        chatMessageViewHolder.setText(chatMessage.getMessage());
+                    } else if (user.equalsIgnoreCase(userName)) {
+                        chatMessageViewHolder.setGravity("right");
+                        chatMessageViewHolder.setTime(date);
+                        chatMessageViewHolder.setName("");
+                        chatMessageViewHolder.setText(chatMessage.getMessage());
+                    } else {
+                        Log.d("USER", "populateViewHolder: New User");
+                    }
+                }
+            };
+            mAdapter.notifyDataSetChanged();
+            mRecyclerView.setAdapter(mAdapter);
+        }
     }
 
     private void sendMessage() {
@@ -188,7 +238,7 @@ public class ChatRoom extends AppCompatActivity {
             spanishRef.child(key).setValue(map);
             Translate.translateToEnglish(originalMsg, key, currentTime);
         }
-        updateAdapter();
+        updateAdapter("original");
     }
 
     @Override
